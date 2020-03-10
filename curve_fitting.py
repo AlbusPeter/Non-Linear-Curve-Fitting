@@ -26,7 +26,9 @@ if __name__ == "__main__":
     ## Curve fitting setups
     initial_guess = [4,2,5]
     params_bounds = (0, [20., 5., 20.])
-    params = curve_Fitting(vonmises, x, y, initial_guess, params_bounds)
+
+    ## Params will have the same order as you defined
+    params = curve_Fitting(vonmises, x, y, initial_guess, params_bounds) ## change the fitting function and corresponding params here
 
     ## Show fitted curve ##
     plt.plot(x, vonmises(x, params[0], params[1], params[2]), 'r-')
