@@ -1,6 +1,6 @@
 import numpy as np
 from numpy import exp, cos, sin, pi
-from scipy.special import i0
+from scipy.special import i0, gamma
 
 ## Exponential ##
 def exponential(x, a, b, c):
@@ -21,3 +21,7 @@ def vonmises(x, kappa, mu, amplitude):
 ## Derivative of von Mises ##
 def DoV(x, kappa, mu, amplitude):
     return - amplitude / (i0(kappa) * 2 * pi) * exp(kappa * cos(x - mu)) * kappa * sin(x - mu)
+
+## Gamma Distribution ##
+def Gamma(xdata, a, alpha, beta):
+    return a * np.power(beta, alpha) * np.power(xdata, alpha - 1) * exp(-beta * xdata) / gamma(alpha)
