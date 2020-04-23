@@ -24,9 +24,12 @@ if __name__ == "__main__":
 
     ## Curve fitting setups
     initial_guess = [4,5]
-    params_bounds = (0, [20., 20.])
+    # params_bounds = (0, [20., 20.])
+    params_bounds = ([0, 0], [20., 20.])
     bootstrap = True
     bsIter = 100
+    permutation = True
+    permIter = 100
 
     ## Params will have the same order as you defined
     params = curve_Fitting(vonmise_derivative, x, y, initial_guess, params_bounds) ## change the fitting function and corresponding params here
@@ -54,4 +57,23 @@ if __name__ == "__main__":
             except RuntimeError:
                 pass
         print("bs_a:",round(np.mean(OutA),2),"	95% CI:",np.percentile(OutA,[2.5,97.5]))
-        # np.save('amplitude.npy',OutA)
+        # np.save('amplitude_bootstrap.npy',OutA)
+    
+    if permutation:
+        # perm_a, perm_b = repeate_sampling('perm', xdata, ydata, CurvefitFunc, size = permSize)
+        OutA = [] # Output a array, store each trial's a
+        perm_xdata = x
+        for i in range(permIter):
+            perm_xdata = np.random.permutation(perm_xdata) # permutate nonlocal xdata to update, don't change ydata
+            try:
+                temp_best_vals = curve_Fitting(vonmise_derivative, perm_xdata, y, initial_guess, params_bounds) # permutation make a sample * range(size) times
+                new_x = np.linspace(-np.pi, np.pi, 300)
+                new_y = [vonmise_derivative(xi,temp_best_vals[0],temp_best_vals[1]) for xi in new_x]
+                if new_x[np.argmax(new_y)] > 0: 
+                    OutA.append(np.max(new_y))
+                else: 
+                    OutA.append(-np.max(new_y))
+            except RuntimeError:
+                pass
+        print("perm_a:",round(np.mean(OutA),2),"	90% CI:",np.percentile(OutA,[5,95]))
+        # np.save('amplitude_permutation.npy',OutA)
