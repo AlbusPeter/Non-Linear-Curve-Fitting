@@ -1,6 +1,6 @@
 from scipy.optimize import curve_fit
 import numpy as np
-from nonlinear_functions import vonmises
+from nonlinear_functions import vonmise_derivative
 import matplotlib.pyplot as plt
 
 def curve_Fitting(func, x, y, initials, bounds):
@@ -12,10 +12,9 @@ if __name__ == "__main__":
     x = np.linspace(-np.pi, np.pi, 1000)
 
     ## generate random von Mises samples ##
-    mu = 0
     kappa = 8.0
     amplitude = 10
-    y = vonmises(x, kappa, mu, amplitude)
+    y = vonmise_derivative(x, amplitude, kappa)
     noise = 1.0 * np.random.normal(size=y.size)
     y += noise
 
@@ -24,12 +23,35 @@ if __name__ == "__main__":
     plt.scatter(x, y)
 
     ## Curve fitting setups
-    initial_guess = [4,2,5]
-    params_bounds = (0, [20., 5., 20.])
+    initial_guess = [4,5]
+    params_bounds = (0, [20., 20.])
+    bootstrap = True
+    bsIter = 100
 
     ## Params will have the same order as you defined
-    params = curve_Fitting(vonmises, x, y, initial_guess, params_bounds) ## change the fitting function and corresponding params here
+    params = curve_Fitting(vonmise_derivative, x, y, initial_guess, params_bounds) ## change the fitting function and corresponding params here
 
     ## Show fitted curve ##
-    plt.plot(x, vonmises(x, params[0], params[1], params[2]), 'r-')
+    plt.plot(x, vonmise_derivative(x, params[0], params[1]), 'r-')
     plt.show()
+
+    ## Bootstrap ##
+    if bootstrap:
+        OutA = [] # Output a array, store each trial's a
+        bsSize = int(1.0 * len(x))
+        for i in range(bsIter):
+            RandIndex = np.random.choice(len(x), bsSize, replace=True) # get randi index of xdata
+            xdataNEW = [x[i] for i in RandIndex] # change xdata index
+            ydataNEW = [y[i] for i in RandIndex] # change ydata index
+            try:
+                temp_best_vals = curve_Fitting(vonmise_derivative, xdataNEW, ydataNEW, initial_guess, params_bounds)
+                new_x = np.linspace(-np.pi, np.pi, 300)
+                new_y = [vonmise_derivative(xi,temp_best_vals[0],temp_best_vals[1]) for xi in new_x]
+                if new_x[np.argmax(new_y)] > 0: 
+                    OutA.append(np.max(new_y))
+                else: 
+                    OutA.append(-np.max(new_y))
+            except RuntimeError:
+                pass
+        print("bs_a:",round(np.mean(OutA),2),"	95% CI:",np.percentile(OutA,[2.5,97.5]))
+        # np.save('amplitude.npy',OutA)
